@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model building {
+  id           Int    @id @default(autoincrement())
+  buildingName String
+  room         room[]
+}
+
+model repairRequest {
+  id           Int                 @id @default(autoincrement())
+  roomId       Int
+  userId       Int
+  title        String
+  repairDeteil String
+  repairPhoto  String
+  phone        String
+  status       repairRequestStatus @default(Pending)
+  createDate   DateTime            @default(now()) @db.Timestamp(3)
+  UpdateDate   DateTime            @updatedAt @db.Timestamp(3)
+  room         room                @relation(fields: [roomId], references: [id], map: "Repair_Request_roomId_fkey")
+  user         user                @relation(fields: [userId], references: [id], map: "Repair_Request_userId_fkey")
+
+  @@index([roomId], map: "Repair_Request_roomId_fkey")
+  @@index([userId], map: "Repair_Request_userId_fkey")
+}
+
+model room {
+  id            Int             @id @default(autoincrement())
+  roomId        Int
+  userId        Int?
+  buildingId    Int?
+  repairRequest repairRequest[]
+  building      building?       @relation(fields: [buildingId], references: [id], map: "Room_bulldingId_fkey")
+  user          user?           @relation(fields: [userId], references: [id], map: "Room_userId_fkey")
+
+  @@index([buildingId], map: "Room_bulldingId_fkey")
+  @@index([userId], map: "Room_userId_fkey")
+}
+
+model user {
+  id            Int             @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  password      String
+  isAdmin       Boolean         @default(false)
+  phone         String?         @unique(map: "User_phone_key")
+  email         String?         @unique(map: "User_email_key")
+  repairRequest repairRequest[]
+  room          room[]
+}
+
+enum repairRequestStatus {
+  Pending
+  Inprogress
+  Completed
+}
